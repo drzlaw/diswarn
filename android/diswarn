@@ -1,0 +1,74 @@
+#!/system/bin/sh
+#Enable vibration alerts by connection lost
+
+#INIT VARIABLES
+vib_connect=(100 100)
+vib_disconnect=(100 100 100)
+vib_error=(300 300)
+msg_connect="Phone connected"
+msg_disconnect="Phone disconnected"
+msg_error="Service stopped"
+msg_title="DisWarn"
+showmessage=1
+
+while read -r desc line || [[ -n "$line" ]]; do
+    case $desc in
+    "SHOWMESSAGE") showmessage=$line;;
+    "VIB_CONNECT") vib_connect=($line);;
+    "VIB_DISCONNECT") vib_disconnect=($line);;
+    "VIB_ERROR") vib_error=($line);;
+    "MSG_CONNECT") msg_connect=$line;;
+    "MSG_DISCONNECT") msg_disconnect=$line;;
+    "MSG_ERROR") msg_error=$line;;
+    esac
+done 2>/dev/null < "/data/media/0/diswarn/diswarn.conf"
+
+#FUNCTIONS
+vibrate()
+{
+    echo $1 > /sys/class/timed_output/vibrator/enable
+    until [ `cat /sys/class/timed_output/vibrator/enable` == "0" ]
+    do
+        sleep 0.02
+    done
+}
+
+vibrate_pattern()
+{
+    for t in $@
+    do
+        sleep 0.1
+        vibrate $t
+    done
+}
+
+notification()
+{
+    if [ "$showmessage" -ne "0" ] #messages activated
+    then
+        am start -a android.intent.action.MAIN -e message "$1 title=$msg_title" -n com.android.msg/.ShowNotification 1>/dev/null &
+    fi
+}
+
+alert()
+{
+    am start -a android.intent.action.MAIN -e message "$1 title=$msg_title" -n com.android.msg/.ShowAlert 1>/dev/null &
+}
+
+#BEGIN
+logcat -T 1 -s "bt-btif:W" /dev/null |
+while read code1 code2 code3 code4 code5 code6 code7
+do
+    if [ "$code4$code5$code6" = "invalidrfcslot" ] #device disconnected
+    then
+        notification "$msg_disconnect"
+        vibrate_pattern "${vib_disconnect[@]}"
+    elif [ "$code4$code5" = "newconn_srvc" ] #device connected
+    then
+        notification "$msg_connect"
+        vibrate_pattern "${vib_connect[@]}"
+    fi
+done
+
+alert "$msg_error"
+vibrate_pattern "${vib_error[@]}"

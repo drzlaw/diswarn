@@ -1,0 +1,8 @@
+#!/system/bin/sh
+#DisWarn running script.
+
+chmod 0777 /sys/class/timed_output/vibrator/enable
+echo 100 > /sys/class/timed_output/vibrator/enable
+nohup diswarn < /dev/null > /dev/null 2>/dev/null &
+
+exec logwatch_orig $@
