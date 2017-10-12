@@ -11,8 +11,7 @@ setprop diswarn.disconnect 0
 	
 nohup diswarn_message < /dev/null > /dev/null 2>/dev/null &
 
-logTime=`date +"%m-%d %H:%M:%S.000"`
-logcat -s -T "$logTime" "bt-btif:W" /dev/null | 
+logcat -s -T 1 "bt-btif:W" /dev/null | 
 while read code1 code2 code3 code4 code5 code6 code7; do 
 	if [ "$code4$code5$code6" = "invalidrfcslot" ]; then #device disconnected
 		setprop diswarn.disconnect `date +%s`
