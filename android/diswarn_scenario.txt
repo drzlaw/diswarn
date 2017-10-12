@@ -1,0 +1,8 @@
+#Vibration scenario for diswarn 3.2. Reboot watch after changing scenario.
+DISCONNECT 600 600
+CONNECT 200
+SHOWMESSAGE 1
+CONNECT_TEXT Установлена связь со смартфоном
+DISCONNECT_TEXT Потеряна связь со смартфоном
+WARNING_TEXT Работа сервиса уведомлений о потере связи со смартфоном прекращена
+DELAY_IN_SEC 30
