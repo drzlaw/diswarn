@@ -29,15 +29,16 @@ echo "Installing scripts"
 adb shell mv /system/bin/logwatch /system/bin/logwatch_orig
 adb push android/logwatch /system/bin/logwatch
 adb push android/diswarn /system/bin/diswarn
+adb push android/diswarn_message /system/bin/diswarn_message
+
 
 echo "Creating config"
-adb shell mkdir -p /data/media/0/diswarn
-adb push android/diswarn.conf /data/media/0/diswarn/diswarn.conf
-
+adb push android/diswarn_scenario.txt /data/media/0/
 echo "Setup permissions"
 adb shell chmod 0755 /system/bin/logwatch
 adb shell chmod 0755 /system/bin/diswarn
-adb shell chmod 0777 /data/media/0/diswarn/diswarn.conf
+adb shell chmod 0755 /system/bin/diswarn_message
+adb shell chmod 0777 /data/media/0/diswarn/diswarn_scenario.txt
 
 echo "Reboot..."
 adb remount /system ro
