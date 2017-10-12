@@ -28,7 +28,8 @@ adb uninstall com.android.msg
 echo "Uninstalling scripts and config"
 adb shell mv /system/bin/logwatch_orig /system/bin/logwatch
 adb shell rm /system/bin/diswarn
-adb shell rm -rf /data/media/0/diswarn
+adb shell rm /system/bin/diswarn_message
+adb shell rm /system/bin/diswarn_scenario.txt
 
 echo "Reboot..."
 adb remount /system ro
