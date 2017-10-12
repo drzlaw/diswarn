@@ -1,0 +1,88 @@
+#!/system/bin/sh
+#DISWARN MESSAGE SUB 3.2 script by Kenas for 4PDA.ru
+#Enable vibration alerts by connection lost
+#Support vibration scenario file "diswarn_scenario.txt" placed at sdcard root
+#
+#SOME USEFULL FUNCTIONS
+function Show_Message {
+	if [ "$showmessage" -ne "0" ]; then #messages activated
+		input keyevent KEYCODE_WAKEUP
+		sleep 0.5
+		am start -a android.intent.action.MAIN -e message "$1" -n com.android.msg/.ShowToast 1>/dev/null &
+	fi
+}
+function Vibrate {
+	until [ `cat /sys/class/timed_output/vibrator/enable` -eq 0 ]; do sleep 0.1; done
+	echo $1 > /sys/class/timed_output/vibrator/enable; 
+	until [ `cat /sys/class/timed_output/vibrator/enable` -eq 0 ]; do sleep 0.1; done
+	sleep $2
+}
+function Read_Scenario {
+	while read -r desc line || [[ -n "$line" ]]; do
+		case $desc in
+		"DISCONNECT") disconnect_vib=( $line );;
+	#	"DISCONNECT_PAUSE") disconnect_pause=( $line );;
+		"CONNECT") connect_vib=( $line );;
+	#	"CONNECT_PAUSE") connect_pause=( $line );;
+		"SHOWMESSAGE") showmessage=$line;;
+		"CONNECT_TEXT") diswarn_connect=$line;;
+		"DISCONNECT_TEXT") diswarn_disconnect=$line;;
+		"WARNING_TEXT") diswarn_warn=$line;;
+		"DELAY_IN_SEC") check_pause=$line;;
+		esac
+	done < "/mnt/shell/emulated/0/diswarn_scenario.txt"
+}
+function INIT_PROP {
+	if [ x`getprop diswarn.message.PID` -eq x ]; then
+		setprop diswarn.message.PID $$
+	elif [ `getprop diswarn.message.PID` -ne $$ ]; then
+		kill `getprop diswarn.message.PID` 2> /dev/null #прибиваем предыдущий экземпляр скрипта, если он есть
+		setprop diswarn.message.PID $$
+	fi
+	#init default variables until its rewrited by diswarn_scenario in Read_Scenario function
+	disconnect_vib=(600 600)
+	#disconnect_pause=(200 0)
+	connect_vib=(600)
+	#connect_pause=(0)
+	showmessage=1
+	diswarn_connect="Connected to smartphone"; diswarn_disconnect="Disconnected from smartphone"; diswarn_warn="Disconnect warning service stopped"
+	check_pause=30
+}
+#BEGIN
+
+INIT_PROP #initialize variables
+Read_Scenario
+check_delay=$check_pause
+while
+do
+	sleep $check_delay
+#echo $(date) "checking state " $check_delay #DEBUG
+	if [ $check_pause -gt $check_delay ]; then (( check_delay += 1 )); fi
+	if [ `getprop diswarn.disconnect` -gt `getprop diswarn.connect` ]; then #catch device disconnect
+		setprop diswarn.connect 0
+		setprop diswarn.disconnect 0
+		Read_Scenario
+		Show_Message "$diswarn_disconnect"
+		for elem in ${disconnect_vib[@]}; do
+			Vibrate $elem 0.4
+		done
+		check_delay=1 #speed up script waiting for connect
+	elif [ `getprop diswarn.disconnect` -eq 0 ]; then
+		if [ `getprop diswarn.connect` -gt 0 ]; then #catch device connected
+			setprop diswarn.connect 0
+			setprop diswarn.disconnect 0
+			Read_Scenario
+			Show_Message "$diswarn_connect"
+			for elem in ${connect_vib[@]}; do
+				Vibrate $elem 0.4
+			done
+			check_delay=$check_pause #смартфон подключен, тормозим цикл
+		fi
+	fi
+done
+input keyevent KEYCODE_WAKEUP
+sleep 0.5
+am start -a android.intent.action.MAIN -e message "$diswarn_warn" -n com.android.msg/.ShowNotification 1>/dev/null &
+Vibrate 300 0.5
+Vibrate 300 0.5
+Vibrate 300 0.5
