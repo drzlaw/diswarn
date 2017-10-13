@@ -1,5 +1,6 @@
 #!/system/bin/sh
-#DISWARN 3.2 script by Kenas for 4PDA.ru
+# DISWARN 4.0 script by Kenas for 4PDA.ru
+# You must specify bluetooth MAC address of your device in diswarn_scenario.txt firstly
 
 setprop diswarn.PID $$
 setprop diswarn.connect 0
@@ -7,20 +8,19 @@ setprop diswarn.disconnect 0
 	
 nohup diswarn_message < /dev/null > /dev/null 2>/dev/null &
 
-logcat -s -T 1 "bt-btif:W" /dev/null | 
-while read code1 code2 code3 code4 code5 code6 code7; do 
-	if [ "$code4$code5$code6" = "invalidrfcslot" ]; then #device disconnected
-		setprop diswarn.disconnect `date +%s`
-	elif [ "$code4$code5" = "newconn_srvc" ]; then #device connected
-		setprop diswarn.connect `date +%s`
-	fi
+logcat -s -b main -T 1 "IWDS---b:I" /dev/null | 
+while read -r code1 code2 code3 code4 code5 code6 code7 code8 code9; do 
+	case $code3$code8 in
+	'Disconnect[devAddress='`getprop diswarn.bt_addr`",") setprop diswarn.disconnect `date +%s`;;
+	'Connect[devAddress='`getprop diswarn.bt_addr`",") setprop diswarn.connect `date +%s`;;
+	esac
 	
-	if [ `getprop diswarn.stop` -eq "1" ]; then #стоп-флаг пользователя
+	if [ `getprop diswarn.stop` -eq "1" ]; then # stop by user command
 		setprop diswarn.stop 0
-		exit
+		exit 4
 	fi
-	if [ `getprop diswarn.PID` -ne $$ ]; then
-		exit
+	if [ `getprop diswarn.PID` -ne $$ ]; then # stop if new one script running
+		exit 3
 	fi
 done
 
