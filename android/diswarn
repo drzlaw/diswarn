@@ -1,10 +1,6 @@
 #!/system/bin/sh
 #DISWARN 3.2 script by Kenas for 4PDA.ru
-if [ x`getprop diswarn.PID` -eq x ]; then
-	setprop diswarn.PID $$
-elif [ `getprop diswarn.PID` -ne $$ ]; then
-	kill `getprop diswarn.PID` 2> /dev/null #прибиваем предыдущий экземпляр скрипта, если он есть
-fi
+
 setprop diswarn.PID $$
 setprop diswarn.connect 0
 setprop diswarn.disconnect 0
@@ -18,4 +14,14 @@ while read code1 code2 code3 code4 code5 code6 code7; do
 	elif [ "$code4$code5" = "newconn_srvc" ]; then #device connected
 		setprop diswarn.connect `date +%s`
 	fi
+	
+	if [ `getprop diswarn.stop` -eq "1" ]; then #стоп-флаг пользователя
+		setprop diswarn.stop 0
+		exit
+	fi
+	if [ `getprop diswarn.PID` -ne $$ ]; then
+		exit
+	fi
 done
+
+setprop diswarn.stopped `date`
