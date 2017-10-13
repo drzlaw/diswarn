@@ -48,8 +48,8 @@ function Read_Scenario {
 			"DISCONNECT_TEXT") diswarn_disconnect=$line;;
 			"WARNING_TEXT") diswarn_warn=$line;;
 			"DELAY_IN_SEC") check_pause=$line;;
-			"BT_ADDR") setprop diswarn.bt_addr "$line";;
-			"STOP") if [ $line -eq "1" ]; then btset=0; setprop diswarn.stop 1; fi ;;
+			"BT_ADDR") btset=0; setprop diswarn.bt_addr "$line";;
+			"STOP") if [ $line -eq "1" ]; then setprop diswarn.stop 1; fi ;;
 		esac
 	done <<<  "$scfile"
 	
