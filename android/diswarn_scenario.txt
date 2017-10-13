@@ -1,4 +1,4 @@
-﻿#Vibration scenario for diswarn 3.2.
+﻿#Vibration scenario for diswarn 4.0
 #You haven't reboot watch after changing this scenario.
 DISCONNECT 600 600
 CONNECT 200 200
@@ -7,4 +7,5 @@ CONNECT_TEXT Установлена связь со смартфоном
 DISCONNECT_TEXT Потеряна связь со смартфоном
 WARNING_TEXT Работа сервиса уведомлений о потере связи со смартфоном прекращена
 DELAY_IN_SEC 30
+BT_ADDR 00:00:00:00:5A:AD
 STOP 0

@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# DISWARN MESSAGE SUB 3.2 script by Kenas for 4PDA.ru
+# DISWARN MESSAGE SUB 4.0 script by Kenas for 4PDA.ru
 # Enable vibration alerts by connection lost
 #  Support vibration scenario file "diswarn_scenario.txt" placed at sdcard root
 #
@@ -8,6 +8,7 @@ function INIT_PROP {
 # init default variables
 	setprop diswarn.stop 0
 	setprop diswarn.message.PID $1
+	setprop diswarn.bt_addr 0
 	disconnect_vib=(600 600)
 	connect_vib=(600)
 	# disconnect_pause=(200 0)
@@ -23,7 +24,7 @@ function Show_Message {
 	if [ "$showmessage" -ne "0" ]; then # messages activated
 		input keyevent KEYCODE_WAKEUP
 		sleep 0.5
-		am start -a android.intent.action.MAIN -e message "$1" -n com.android.msg/.ShowToast 1>/dev/null &
+		am start -a android.intent.action.MAIN -e message "$1" -n com.android.msg/.ShowToast 1>/dev/null 
 	fi
 }
 function Vibrate {
@@ -46,9 +47,17 @@ function Read_Scenario {
 			"DISCONNECT_TEXT") diswarn_disconnect=$line;;
 			"WARNING_TEXT") diswarn_warn=$line;;
 			"DELAY_IN_SEC") check_pause=$line;;
+			"BT_ADDR") setprop diswarn.bt_addr $line;;
 			"STOP") if [ $line -eq "1" ]; then setprop diswarn.stop 1; fi ;;
 		esac
 	done <<<  "$scfile"
+	
+	if [ `getprop diswarn.bt_addr` -eq 0 ]; then #check bt MAC 
+		input keyevent KEYCODE_WAKEUP
+		sleep 0.5
+		am start -a android.intent.action.MAIN -e message "Bluetooth MAC of your smartphone not found. Please edit diswarn_scenario.txt. Diswarn STOPPED" -n com.android.msg/.ShowNotification 1>/dev/null 
+		setprop diswarn.stop 1
+	fi
 }
 
 # BEGIN
@@ -90,7 +99,7 @@ do
 done
 input keyevent KEYCODE_WAKEUP
 sleep 0.5
-am start -a android.intent.action.MAIN -e message "$diswarn_warn" -n com.android.msg/.ShowNotification 1>/dev/null &
+am start -a android.intent.action.MAIN -e message "$diswarn_warn" -n com.android.msg/.ShowNotification 1>/dev/null 
 Vibrate 300 0.5
 Vibrate 300 0.5
 Vibrate 300 0.5
