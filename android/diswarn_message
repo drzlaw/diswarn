@@ -35,6 +35,7 @@ function Vibrate {
 }
 function Read_Scenario {
 # some tricks for correct reading Windows text file
+	btset=1
 	scfile=$(tr -d "\r" < "/mnt/shell/emulated/0/diswarn_scenario.txt") 
 	while read -r desc line || [[ -n $line ]]; do
 		case $desc in
@@ -47,12 +48,12 @@ function Read_Scenario {
 			"DISCONNECT_TEXT") diswarn_disconnect=$line;;
 			"WARNING_TEXT") diswarn_warn=$line;;
 			"DELAY_IN_SEC") check_pause=$line;;
-			"BT_ADDR") setprop diswarn.bt_addr $line;;
-			"STOP") if [ $line -eq "1" ]; then setprop diswarn.stop 1; fi ;;
+			"BT_ADDR") setprop diswarn.bt_addr "$line";;
+			"STOP") if [ $line -eq "1" ]; then btset=0; setprop diswarn.stop 1; fi ;;
 		esac
 	done <<<  "$scfile"
 	
-	if [ `getprop diswarn.bt_addr` -eq 0 ]; then #check bt MAC 
+	 if [ btset = 1 ]; then #check bt MAC failed 
 		input keyevent KEYCODE_WAKEUP
 		sleep 0.5
 		am start -a android.intent.action.MAIN -e message "Bluetooth MAC of your smartphone not found. Please edit diswarn_scenario.txt. Diswarn STOPPED" -n com.android.msg/.ShowNotification 1>/dev/null 
